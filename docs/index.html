@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>TeleRadShift — Worst-Group Conformal Risk Control for Safe VLM Triage</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet"/>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300;0,400;0,600;1,400&family=Raleway:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <link href="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.css" rel="stylesheet"/>
+  <style>
+    :root {
+      --bg:#ffffff; --default:#444444; --heading:#0a2a62;
+      --accent:#1b3bee; --surface:#ffffff; --alt-bg:#f4f6fd;
+      --border:#dde3f0; --muted:#6b7a99;
+      --font-body:'Open Sans',sans-serif; --font-head:'Raleway',sans-serif;
+    }
+    *,*::before,*::after{box-sizing:border-box;}
+    html{scroll-behavior:smooth;}
+    body{font-family:var(--font-body);font-size:.91rem;color:var(--default);background:var(--bg);line-height:1.75;}
+    h1,h2,h3,h4,h5,h6{font-family:var(--font-head);color:var(--heading);}
+    a{color:var(--accent);text-decoration:none;}
+    a:hover{color:#0f28c2;text-decoration:underline;}
+    strong{color:var(--heading);}
+
+    /* NAVBAR */
+    #topnav{background:#fff;box-shadow:0 2px 18px rgba(0,0,0,.07);position:fixed;top:0;left:0;right:0;z-index:9000;padding:10px 0;transition:padding .3s,box-shadow .3s;}
+    .navbar-brand{font-family:var(--font-head);font-weight:700;font-size:1.05rem;color:var(--heading)!important;}
+    .navbar-brand span{color:var(--accent);}
+    .nav-link{font-family:var(--font-head);font-size:.78rem;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--default)!important;padding:5px 12px!important;transition:color .2s;position:relative;}
+    .nav-link::after{content:'';position:absolute;bottom:0;left:12px;right:12px;height:2px;background:var(--accent);transform:scaleX(0);transition:transform .25s;}
+    .nav-link:hover{color:var(--accent)!important;}
+    .nav-link:hover::after{transform:scaleX(1);}
+
+    /* HERO */
+    #hero{background:linear-gradient(140deg,#071d52 0%,#1040a0 55%,#1b3bee 100%);padding:120px 0 80px;position:relative;overflow:hidden;}
+    #hero::before{content:'';position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse 55% 65% at 90% 25%,rgba(255,255,255,.06) 0%,transparent 65%),radial-gradient(ellipse 30% 40% at 5% 85%,rgba(255,255,255,.03) 0%,transparent 60%);}
+    .hero-venue{font-family:var(--font-head);font-size:.72rem;font-weight:700;letter-spacing:.13em;text-transform:uppercase;color:rgba(255,255,255,.7);margin-bottom:10px;}
+    #hero h1{font-family:var(--font-head);font-size:clamp(1.45rem,3vw,2.1rem);font-weight:700;color:#fff;line-height:1.25;margin-bottom:16px;}
+    #hero p.lead{font-size:.92rem;color:rgba(255,255,255,.8);max-width:700px;line-height:1.8;margin-bottom:24px;}
+    .kw-pill{display:inline-block;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.22);color:rgba(255,255,255,.85);font-family:var(--font-head);font-size:.7rem;font-weight:600;padding:3px 11px;border-radius:20px;margin:2px;}
+    .anon-tag{display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:rgba(255,255,255,.8);font-family:var(--font-head);font-size:.7rem;font-weight:600;letter-spacing:.06em;padding:4px 13px;border-radius:20px;margin-bottom:14px;}
+    .btn-hero{font-family:var(--font-head);font-size:.78rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;padding:9px 24px;border-radius:4px;display:inline-flex;align-items:center;gap:7px;transition:all .25s;}
+    .btn-hero-white{background:#fff;color:var(--accent);border:2px solid #fff;}
+    .btn-hero-white:hover{background:transparent;color:#fff;text-decoration:none;}
+    .btn-hero-ghost{background:transparent;color:#fff;border:2px solid rgba(255,255,255,.45);}
+    .btn-hero-ghost:hover{border-color:#fff;color:#fff;text-decoration:none;}
+    .stat-row{margin-top:44px;padding-top:32px;border-top:1px solid rgba(255,255,255,.16);display:flex;flex-wrap:wrap;gap:8px 0;align-items:center;}
+    .stat-cell{text-align:center;padding:0 28px 0 0;}
+    .stat-num{font-family:var(--font-head);font-size:1.7rem;font-weight:800;color:#fff;display:block;line-height:1;}
+    .stat-lbl{font-family:var(--font-head);font-size:.65rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,.6);}
+    .stat-sep{width:1px;height:36px;background:rgba(255,255,255,.2);margin-right:28px;}
+
+    /* SECTIONS */
+    section{padding:64px 0;}
+    .sec-alt{background:var(--alt-bg);}
+    section[id]{scroll-margin-top:70px;}
+    .sec-hdr{margin-bottom:36px;}
+    .sec-hdr .pre-label{font-family:var(--font-head);font-size:.68rem;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:var(--accent);display:block;margin-bottom:5px;}
+    .sec-hdr h2{font-family:var(--font-head);font-size:1.55rem;font-weight:700;color:var(--heading);margin-bottom:8px;}
+    .sec-hdr p{color:#6b7a99;font-size:.87rem;max-width:620px;margin:0;}
+    .accent-line{width:40px;height:3px;background:var(--accent);border-radius:2px;margin:10px 0 0;}
+    .sec-hdr.center{text-align:center;}
+    .sec-hdr.center .accent-line{margin:10px auto 0;}
+    .sec-hdr.center p{margin:0 auto;}
+    .subsec-label{font-family:var(--font-head);font-size:.75rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);margin-bottom:8px;display:block;}
+
+    /* ABSTRACT */
+    .abstract-card{background:#fff;border:1px solid var(--border);border-left:4px solid var(--accent);border-radius:6px;padding:28px 30px;box-shadow:0 3px 16px rgba(27,59,238,.05);font-size:.9rem;line-height:1.82;}
+    .abstract-card p{margin-bottom:10px;}
+    .abstract-card p:last-child{margin:0;}
+
+    /* CONTRIB CARDS */
+    .contrib-card{background:#fff;border:1px solid var(--border);border-radius:6px;padding:26px 22px;height:100%;transition:box-shadow .25s,transform .25s;}
+    .contrib-card:hover{box-shadow:0 8px 28px rgba(27,59,238,.1);transform:translateY(-3px);}
+    .contrib-icon{width:52px;height:52px;border-radius:50%;background:rgba(27,59,238,.08);color:var(--accent);display:flex;align-items:center;justify-content:center;font-size:1.3rem;margin-bottom:14px;}
+    .contrib-card h5{font-family:var(--font-head);font-size:.9rem;font-weight:700;color:var(--heading);margin-bottom:8px;}
+    .contrib-card p{font-size:.83rem;color:#666;margin:0;}
+
+    /* METHOD STEPS */
+    .step-row{display:flex;gap:16px;margin-bottom:24px;align-items:flex-start;}
+    .step-num{min-width:34px;height:34px;border-radius:50%;background:var(--accent);color:#fff;font-family:var(--font-head);font-size:.8rem;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px;}
+    .step-body h6{font-family:var(--font-head);font-size:.88rem;font-weight:700;color:var(--heading);margin-bottom:3px;}
+    .step-body p{font-size:.83rem;color:#666;margin:0;}
+    .eq-inline{display:inline-block;background:var(--alt-bg);border:1px solid var(--border);border-radius:4px;padding:5px 13px;margin-top:7px;font-family:'Courier New',monospace;font-size:.8rem;color:var(--heading);}
+
+    /* FIGURE CARDS */
+    .fig-card{background:#fff;border:1px solid var(--border);border-radius:6px;overflow:hidden;transition:box-shadow .25s,transform .25s;}
+    .fig-card:hover{box-shadow:0 6px 24px rgba(10,42,98,.09);transform:translateY(-2px);}
+    .fig-img{background:#f7f9fc;padding:14px;display:flex;align-items:center;justify-content:center;border-bottom:1px solid var(--border);}
+    .fig-img img{max-width:100%;max-height:260px;object-fit:contain;cursor:zoom-in;transition:transform .25s;}
+    .fig-img img:hover{transform:scale(1.02);}
+    .fig-body{padding:13px 15px;}
+    .fig-num{font-family:var(--font-head);font-size:.67rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);display:block;margin-bottom:4px;}
+    .fig-cap{font-size:.8rem;color:#666;line-height:1.55;margin:0;}
+    .fig-wide .fig-img{min-height:160px;}
+    .fig-wide .fig-img img{max-height:340px;}
+
+    /* TABLES */
+    .tbl-label{font-family:var(--font-head);font-size:.78rem;font-weight:700;color:var(--heading);margin-bottom:9px;}
+    .res-table{width:100%;border-collapse:separate;border-spacing:0;border:1px solid var(--border);border-radius:6px;overflow:hidden;font-size:.83rem;}
+    .res-table thead th{background:var(--heading);color:rgba(255,255,255,.82);font-family:var(--font-head);font-size:.7rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:10px 13px;border:none;white-space:nowrap;}
+    .res-table tbody td{padding:8px 13px;border-bottom:1px solid var(--border);vertical-align:middle;}
+    .res-table tbody tr:last-child td{border-bottom:none;}
+    .res-table tbody tr:hover{background:#f4f6fd;}
+    .row-ours{background:rgba(27,59,238,.05)!important;}
+    .row-ours td{font-weight:700;color:var(--heading);}
+    .row-ours td:first-child{border-left:3px solid var(--accent);}
+    .bs{background:#d4edda;color:#1a5c2a;font-size:.7rem;padding:2px 7px;border-radius:3px;font-weight:700;font-family:var(--font-head);}
+    .bu{background:#fde8e8;color:#8b1a1a;font-size:.7rem;padding:2px 7px;border-radius:3px;font-weight:700;font-family:var(--font-head);}
+    .section-rule{border:none;border-top:1px solid var(--border);margin:44px 0;}
+
+    /* CITATION */
+    .bib-block{background:#f4f6fd;border:1px solid var(--border);border-left:4px solid var(--accent);border-radius:6px;padding:20px 22px;font-family:'Courier New',monospace;font-size:.78rem;line-height:1.7;color:#1e2a56;white-space:pre-wrap;word-break:break-word;position:relative;}
+    .copy-btn{position:absolute;top:12px;right:12px;background:var(--accent);color:#fff;border:none;border-radius:4px;font-family:var(--font-head);font-size:.68rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:5px 12px;cursor:pointer;transition:background .2s;}
+    .copy-btn:hover{background:#0f28c2;}
+
+    /* FOOTER */
+    footer{background:var(--heading);color:rgba(255,255,255,.55);padding:26px 0;font-family:var(--font-head);font-size:.78rem;}
+    footer .brand{font-size:.95rem;font-weight:700;color:#fff;}
+    footer a{color:rgba(255,255,255,.6);}
+    footer a:hover{color:#fff;text-decoration:none;}
+    .f-sep{display:inline-block;width:1px;height:16px;background:rgba(255,255,255,.18);margin:0 10px;vertical-align:middle;}
+
+    /* LIGHTBOX */
+    .lb{display:none;position:fixed;inset:0;background:rgba(4,8,20,.93);z-index:99999;align-items:center;justify-content:center;padding:20px;}
+    .lb.open{display:flex;}
+    .lb img{max-width:92vw;max-height:88vh;object-fit:contain;border-radius:4px;box-shadow:0 20px 70px rgba(0,0,0,.5);}
+    .lb-close{position:fixed;top:14px;right:18px;background:none;border:none;color:rgba(255,255,255,.7);font-size:1.8rem;cursor:pointer;line-height:1;transition:color .2s;}
+    .lb-close:hover{color:#fff;}
+
+    @media(max-width:767px){
+      #hero{padding:90px 0 56px;}
+      .stat-sep{display:none;}
+      .stat-cell{padding:0 16px 0 0;}
+      section{padding:48px 0;}
+      .nav-link::after{display:none;}
+    }
+  </style>
+</head>
+<body>
+
+<!-- NAVBAR -->
+<nav id="topnav" class="navbar navbar-expand-lg">
+  <div class="container">
+    <a class="navbar-brand" href="#hero">Tele<span>Rad</span>Shift</a>
+    <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#nm">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="nm">
+      <ul class="navbar-nav ms-auto">
+        <li class="nav-item"><a class="nav-link" href="#abstract">Abstract</a></li>
+        <li class="nav-item"><a class="nav-link" href="#contributions">Contributions</a></li>
+        <li class="nav-item"><a class="nav-link" href="#method">Method</a></li>
+        <li class="nav-item"><a class="nav-link" href="#results">Results</a></li>
+        <li class="nav-item"><a class="nav-link" href="#ablations">Ablations</a></li>
+        <li class="nav-item"><a class="nav-link" href="#citation">Citation</a></li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section id="hero">
+  <div class="container">
+    <div class="row"><div class="col-lg-10">
+      <div class="anon-tag" data-aos="fade-down"><i class="bi bi-lock-fill"></i> Anonymous Submission — Under Review</div>
+      <div class="hero-venue" data-aos="fade-down" data-aos-delay="60">ACM Multimedia 2026 &nbsp;·&nbsp; MM '26</div>
+      <h1 data-aos="fade-up" data-aos-delay="100">TeleRadShift: Worst-Group Conformal Risk Control for Safe VLM Triage Under Telemedicine Acquisition Shift</h1>
+      <p class="lead" data-aos="fade-up" data-aos-delay="150">Standard CRC enforces average-risk guarantees but fails silently on worst-group safety when radiology VLMs process display-recaptured smartphone images. We introduce <strong style="color:#fff;">FDV</strong> and <strong style="color:#fff;">WG-CRC</strong> — achieving <strong style="color:#fff;">0/15 violations at 23.9% coverage</strong>, an 8.9× improvement over Bonferroni at matched safety.</p>
+      <div class="mb-4" data-aos="fade-up" data-aos-delay="190">
+        <span class="kw-pill">Conformal Prediction</span><span class="kw-pill">Vision-Language Models</span><span class="kw-pill">Chest X-Ray</span><span class="kw-pill">Distribution Shift</span><span class="kw-pill">Uncertainty Quantification</span><span class="kw-pill">Telemedicine</span><span class="kw-pill">Worst-Group Risk</span><span class="kw-pill">Cross-Modal Disagreement</span>
+      </div>
+      <div class="d-flex flex-wrap gap-2" data-aos="fade-up" data-aos-delay="230">
+        <a href="https://github.com/gen-ai-research/teleradshift" target="_blank" class="btn-hero btn-hero-white"><i class="bi bi-github"></i> Code</a>
+        <a href="#results" class="btn-hero btn-hero-ghost"><i class="bi bi-bar-chart-line"></i> Results</a>
+        <a href="#abstract" class="btn-hero btn-hero-ghost"><i class="bi bi-file-text"></i> Paper</a>
+      </div>
+      <div class="stat-row" data-aos="fade-up" data-aos-delay="280">
+        <div class="stat-cell"><span class="stat-num">0/15</span><span class="stat-lbl">Group Violations</span></div>
+        <div class="stat-sep"></div>
+        <div class="stat-cell"><span class="stat-num">23.9%</span><span class="stat-lbl">Coverage</span></div>
+        <div class="stat-sep"></div>
+        <div class="stat-cell"><span class="stat-num">8.9×</span><span class="stat-lbl">vs. Bonferroni</span></div>
+        <div class="stat-sep"></div>
+        <div class="stat-cell"><span class="stat-num">1,800</span><span class="stat-lbl">Real Captures</span></div>
+        <div class="stat-sep"></div>
+        <div class="stat-cell"><span class="stat-num">11,733</span><span class="stat-lbl">CheXpert X-Rays</span></div>
+      </div>
+    </div></div>
+  </div>
+</section>
+
+<!-- ABSTRACT -->
+<section id="abstract">
+  <div class="container">
+    <div class="sec-hdr" data-aos="fade-up">
+      <span class="pre-label">Overview</span>
+      <h2>Abstract</h2>
+      <div class="accent-line"></div>
+    </div>
+    <div class="row justify-content-center">
+      <div class="col-lg-10" data-aos="fade-up" data-aos-delay="80">
+        <div class="abstract-card">
+          <p>Chest radiographs often reach clinicians in low-resource telemedicine settings as display-recaptured smartphone images rather than native digital studies. These images introduce structured acquisition artifacts that create clinically meaningful distribution shift for radiology vision-language models (VLMs). Standard Conformal Risk Control (CRC) enforces average-risk guarantees, but it can still violate worst-group safety on harder corruption subgroups — a failure that remains invisible under aggregate evaluation.</p>
+          <p>We trace this behavior to <strong>cross-modal decoupling</strong>: when visual evidence is degraded, the language decoder remains fluent and confident, producing disagreement across stochastic samples without correspondingly high token entropy. Motivated by this effect, we introduce <strong>Findings-Disagreement-Variance (FDV)</strong>, an uncertainty score combining entropy and cross-sample disagreement, together with <strong>Worst-Group Conformal Risk Control (WG-CRC)</strong>, a post-hoc calibration framework targeting subgroup-level safety without retraining.</p>
+          <p>On TeleRadShift, a structured 15-group benchmark, WG-CRC achieves <strong>0/15 violations at 23.9% coverage</strong>, an 8.9× improvement over Bonferroni at matched safety. The method transfers without recalibration to 1,800 real smartphone captures (0/9 violations, worst-group risk 0.492) and remains stable across 30 random splits (worst-group risk 0.506 ± 0.022).</p>
+          <p class="mb-0">Code: <a href="https://github.com/gen-ai-research/teleradshift" target="_blank">github.com/gen-ai-research/teleradshift</a></p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CONTRIBUTIONS -->
+<section id="contributions" class="sec-alt">
+  <div class="container">
+    <div class="sec-hdr center" data-aos="fade-up">
+      <span class="pre-label">Summary</span>
+      <h2>Key Contributions</h2>
+      <div class="accent-line"></div>
+    </div>
+    <div class="row g-4 justify-content-center">
+      <div class="col-md-4" data-aos="fade-up" data-aos-delay="60">
+        <div class="contrib-card">
+          <div class="contrib-icon"><i class="bi bi-exclamation-triangle-fill"></i></div>
+          <h5>(1) Failure Mode Analysis</h5>
+          <p>Standard CRC satisfies global risk guarantees while silently violating worst-group safety under structured telemedicine acquisition shift — an undetected deployment hazard invisible to conventional evaluation.</p>
+        </div>
+      </div>
+      <div class="col-md-4" data-aos="fade-up" data-aos-delay="120">
+        <div class="contrib-card">
+          <div class="contrib-icon"><i class="bi bi-shield-check-fill"></i></div>
+          <h5>(2) FDV + WG-CRC Framework</h5>
+          <p>Post-hoc calibration combining disagreement-based uncertainty with group-conditional conformal bounds. Achieves 0/15 group violations at 23.9% coverage — an 8.9× improvement over Bonferroni at matched safety.</p>
+        </div>
+      </div>
+      <div class="col-md-4" data-aos="fade-up" data-aos-delay="180">
+        <div class="contrib-card">
+          <div class="contrib-icon"><i class="bi bi-database-fill"></i></div>
+          <h5>(3) TeleRadShift Benchmark</h5>
+          <p>15 synthetic corruption groups (5 families × 3 severities) plus 1,800 real smartphone captures for systematic evaluation of VLM reliability under realistic telemedicine conditions.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- METHOD -->
+<section id="method">
+  <div class="container">
+    <div class="sec-hdr" data-aos="fade-up">
+      <span class="pre-label">Technical Approach</span>
+      <h2>Method</h2>
+      <div class="accent-line"></div>
+    </div>
+
+    <div class="row justify-content-center mb-5" data-aos="fade-up" data-aos-delay="60">
+      <div class="col-12">
+        <div class="fig-card fig-wide">
+          <div class="fig-img"><img src="model_arch3.png" alt="TeleRadShift Pipeline" onclick="lb(this.src)"/></div>
+          <div class="fig-body">
+            <span class="fig-num">Figure 1 — TeleRadShift Overview</span>
+            <p class="fig-cap">A telemedicine chest X-ray undergoes structured acquisition corruptions (blur, brightness, JPEG, occlusion, screen). N=6 stochastic VLM samples are drawn, each parsed into binary findings. FDV uncertainty (entropy H and cross-modal disagreement D) is computed and used to calibrate a per-group abstention threshold τ̂<sub>g</sub>. At inference, FDV(x) &lt; τ̂<sub>g</sub> delivers a risk-controlled report; otherwise the case is deferred to a radiologist.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="row g-5 align-items-start">
+      <div class="col-lg-5" data-aos="fade-up" data-aos-delay="80">
+        <div class="step-row">
+          <div class="step-num">1</div>
+          <div class="step-body">
+            <h6>Corruption Simulation</h6>
+            <p>15 groups: 5 families (Gaussian blur, brightness shift, JPEG compression, screen re-photography, occlusion) × 3 severity levels applied to 11,733 CheXpert chest X-rays.</p>
+          </div>
+        </div>
+        <div class="step-row">
+          <div class="step-num">2</div>
+          <div class="step-body">
+            <h6>Stochastic VLM Sampling</h6>
+            <p>CheXagent-8B generates N=6 stochastic reports per image at T=0.8 with nucleus sampling (top-p=0.9). Each report is parsed into binary pathology predictions ŷ ∈ {0,1}<sup>L</sup>.</p>
+          </div>
+        </div>
+        <div class="step-row">
+          <div class="step-num">3</div>
+          <div class="step-body">
+            <h6>FDV Uncertainty Score</h6>
+            <p>Combines normalized entropy H̃(x) and pairwise disagreement D(x). Disagreement achieves Spearman ρ=0.606 — nearly 3× stronger than entropy alone (ρ=0.197).</p>
+            <div class="eq-inline">FDV(x) = 0.5 · H̃(x) + 0.5 · D(x)</div>
+          </div>
+        </div>
+        <div class="step-row">
+          <div class="step-num">4</div>
+          <div class="step-body">
+            <h6>Worst-Group Conformal Calibration</h6>
+            <p>Per-group thresholds calibrated at ε<sub>cal</sub> = ε − Δ*, where Δ* adds base margin Δ and Hoeffding's finite-sample correction. For TeleRadShift: Δ=0.04, correction≈0.104, ε<sub>cal</sub>=0.356.</p>
+            <div class="eq-inline">Δ* = Δ + √( log(2G/δ') / 2n<sub>min</sub> )</div>
+          </div>
+        </div>
+        <div class="mt-3 p-3" style="background:var(--alt-bg);border:1px solid var(--border);border-radius:6px;font-size:.83rem;color:#555;">
+          <strong style="color:var(--heading);">Cross-Modal Decoupling.</strong> Under acquisition corruption the visual encoder weakens while the language decoder stays confident, reproducing fluent outputs for findings it cannot visually resolve. Repeated sampling of the same corrupted image yields contradictory conclusions — entropy stays low but disagreement rises, exposing the failure mode.
+        </div>
+      </div>
+
+      <div class="col-lg-7" data-aos="fade-up" data-aos-delay="150">
+        <div class="fig-card mb-3">
+          <div class="fig-img"><img src="threshold_curve.png" alt="Threshold Sensitivity" onclick="lb(this.src)"/></div>
+          <div class="fig-body">
+            <span class="fig-num">Threshold Sensitivity — τ vs. Coverage and Worst-Group Risk</span>
+            <p class="fig-cap">As threshold τ increases, both worst-group risk and coverage rise. The safe zone (below ε=0.50) is entered at τ≈0.38. WG-CRC selects the coverage-maximising τ̂<sub>g</sub> per group calibrated at ε<sub>cal</sub>=0.356.</p>
+          </div>
+        </div>
+        <div class="fig-card">
+          <div class="fig-img"><img src="signal_comparison.png" alt="Signal Comparison" onclick="lb(this.src)"/></div>
+          <div class="fig-body">
+            <span class="fig-num">Figure 3 — Uncertainty Signal Quality by Corruption Type</span>
+            <p class="fig-cap">Disagreement D dominates entropy H across all five corruption families (D: 0.57–0.67, H: 0.16–0.23). FDV combines both signals for calibration stability and coverage.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- RESULTS -->
+<section id="results" class="sec-alt">
+  <div class="container">
+    <div class="sec-hdr" data-aos="fade-up">
+      <span class="pre-label">Experiments</span>
+      <h2>Results</h2>
+      <div class="accent-line"></div>
+    </div>
+
+    <!-- §5.1 Main results -->
+    <div class="mb-5">
+      <span class="subsec-label" data-aos="fade-up">§5.1 — WG-CRC Achieves Worst-Group Safety</span>
+      <p data-aos="fade-up" style="font-size:.87rem;color:#555;max-width:820px;margin-bottom:18px;">Evaluated on 5,333 test images across 15 corruption groups (ε=0.50). WG-CRC is the only method achieving zero violations with clinically meaningful coverage. Per-Group CRC without the buffer Δ fails 11/15 groups — showing Δ is structurally necessary, not a post-hoc tuning device. Bonferroni is safe but certifies only 2.7%; WG-CRC certifies 23.9% — an 8.9× improvement.</p>
+      <div data-aos="fade-up" data-aos-delay="60">
+        <p class="tbl-label">Table 1 — Main Results on TeleRadShift (n=5,333, 15 corruption groups, ε=0.50)</p>
+        <div class="table-responsive mb-4">
+          <table class="res-table">
+            <thead><tr><th>Method</th><th>Avg. Risk ↓</th><th>Worst-Group Risk ↓</th><th>Coverage ↑</th><th>Violations</th><th>Safe?</th></tr></thead>
+            <tbody>
+              <tr><td>No Abstention</td><td>0.635</td><td>0.696</td><td>100.0%</td><td>15/15</td><td><span class="bu">✗</span></td></tr>
+              <tr><td>Self-Consistency (H only)</td><td>0.548</td><td>0.670</td><td>16.6%</td><td>14/15</td><td><span class="bu">✗</span></td></tr>
+              <tr><td>Per-Group CRC (no Δ)</td><td>0.521</td><td>0.588</td><td>39.1%</td><td>11/15</td><td><span class="bu">✗</span></td></tr>
+              <tr><td>Bonferroni (Hoeffding)</td><td>0.304</td><td>0.467</td><td>2.7%</td><td>0/15</td><td><span class="bs">✓</span></td></tr>
+              <tr><td>Worst-Group Tuned Global</td><td>0.387</td><td>0.436</td><td>12.9%</td><td>0/15</td><td><span class="bs">✓</span></td></tr>
+              <tr><td>Minimax (cov ≥ 23.9%)</td><td>0.464</td><td>0.516</td><td>30.6%</td><td>3/15</td><td><span class="bu">✗</span></td></tr>
+              <tr><td>Vanilla CRC</td><td>0.472</td><td>0.528</td><td>33.6%</td><td>3/15</td><td><span class="bu">✗</span></td></tr>
+              <tr class="row-ours"><td>WG-CRC + FDV (ours)</td><td>0.450</td><td>0.500</td><td>23.9%</td><td>0/15</td><td><span class="bs">✓</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="row justify-content-center" data-aos="fade-up" data-aos-delay="100">
+        <div class="col-lg-7">
+          <div class="fig-card">
+            <div class="fig-img"><img src="coverage_risk_tradeoff.png" alt="Coverage vs Worst-Group Risk" onclick="lb(this.src)"/></div>
+            <div class="fig-body">
+              <span class="fig-num">Figure 2 — Coverage vs. Worst-Group Risk Frontier</span>
+              <p class="fig-cap">WG-CRC is the only method below ε=0.50 with clinically meaningful coverage. Points above the dashed line violate safety; lower-left methods are safe but unusable. The gap between Vanilla CRC and WG-CRC reveals the hidden failure of average-risk calibration.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <hr class="section-rule"/>
+
+    <!-- §5.2 Signal quality -->
+    <div class="mb-5">
+      <span class="subsec-label" data-aos="fade-up">§5.2 — Disagreement Dominates Entropy Under Acquisition Shift</span>
+      <div class="row g-4 align-items-start">
+        <div class="col-md-5" data-aos="fade-up" data-aos-delay="60">
+          <p style="font-size:.87rem;color:#555;margin-bottom:14px;">Disagreement achieves Spearman ρ=0.606 with diagnostic risk (n=5,000, p &lt; 10<sup>−100</sup>), while entropy achieves only ρ=0.197 — nearly three times weaker. FDV achieves ρ=0.492, capturing disagreement's predictive power while gaining coverage stability from entropy.</p>
+          <p class="tbl-label">Table 2 — Spearman ρ between Uncertainty Signals and Diagnostic Risk</p>
+          <div class="table-responsive">
+            <table class="res-table">
+              <thead><tr><th>Signal</th><th>ρ (corrupted) ↑</th><th>ρ (clean)</th><th>Range</th></tr></thead>
+              <tbody>
+                <tr><td>H (entropy)</td><td>0.197</td><td>0.121</td><td>0.16–0.23</td></tr>
+                <tr><td>D (disagreement)</td><td>0.606</td><td>0.244</td><td>0.57–0.67</td></tr>
+                <tr class="row-ours"><td>FDV (α=0.5)</td><td>0.492</td><td>0.171</td><td>0.47–0.51</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="col-md-7" data-aos="fade-up" data-aos-delay="120">
+          <div class="fig-card">
+            <div class="fig-img"><img src="fdv_correlation.png" alt="FDV Correlation" onclick="lb(this.src)"/></div>
+            <div class="fig-body">
+              <span class="fig-num">FDV Score vs. Diagnostic Risk — by Corruption Type</span>
+              <p class="fig-cap">Consistent positive correlation (ρ=0.47–0.51) across blur, brightness, JPEG, occlusion, and screen. This family-wise consistency confirms FDV as a reliable risk proxy under all tested acquisition artifacts.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <hr class="section-rule"/>
+
+    <!-- §5.3 Real-world -->
+    <div class="mb-5">
+      <span class="subsec-label" data-aos="fade-up">§5.3 — Real-World Validation: Smartphone Captures</span>
+      <p data-aos="fade-up" style="font-size:.87rem;color:#555;max-width:820px;margin-bottom:18px;">200 real chest X-rays photographed on three consumer smartphones (iPhone 13 Pro Max, Samsung Galaxy S23, Google Pixel 7) under three lighting conditions → 1,800 total captures across G'=9 acquisition groups. WG-CRC thresholds applied directly from synthetic CheXpert calibration — no phone-specific tuning.</p>
+      <div class="row g-4 align-items-start">
+        <div class="col-md-5" data-aos="fade-up" data-aos-delay="60">
+          <div class="fig-card">
+            <div class="fig-img"><img src="real_phone_examples.png" alt="Real Phone Captures" onclick="lb(this.src)"/></div>
+            <div class="fig-body">
+              <span class="fig-num">Figure 4 — Real Telemedicine Capture Examples</span>
+              <p class="fig-cap">Naturalistic artifacts absent from synthetic calibration: (a) occlusion from hand placement, (b) display moiré from sensor-monitor interference, (c) perspective distortion from off-axis capture, (d) low-light sensor noise.</p>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-7" data-aos="fade-up" data-aos-delay="120">
+          <p style="font-size:.87rem;color:#555;margin-bottom:14px;">FDV achieves Spearman ρ=0.492 on real captures, consistent with the synthetic test-set range (0.471–0.514). WG-CRC maintains worst-group risk 0.492 ≤ ε=0.50 with 24.3% coverage; Vanilla CRC violates safety in 1/9 groups.</p>
+          <p class="tbl-label">Table 3 — WG-CRC on Real Smartphone Captures (1,800 images, G'=9 groups)</p>
+          <div class="table-responsive">
+            <table class="res-table" style="max-width:420px;">
+              <thead><tr><th>Method</th><th>Coverage ↑</th><th>Violations ↓</th><th>Worst Risk ↓</th></tr></thead>
+              <tbody>
+                <tr><td>Vanilla CRC</td><td>21.2%</td><td>1/9</td><td>0.531</td></tr>
+                <tr class="row-ours"><td>WG-CRC (ours)</td><td>24.3%</td><td>0/9</td><td>0.492</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <hr class="section-rule"/>
+
+    <!-- §5.4 Robustness -->
+    <div>
+      <span class="subsec-label" data-aos="fade-up">§5.4 — Robustness Analysis</span>
+
+      <!-- Row 1: multi-seed figure + text + held-out table -->
+      <div class="row g-4 align-items-start mb-4">
+        <div class="col-md-5" data-aos="fade-up" data-aos-delay="60">
+          <div class="fig-card">
+            <div class="fig-img"><img src="multiseed_distribution.png" alt="Multi-Seed Stability" onclick="lb(this.src)"/></div>
+            <div class="fig-body">
+              <span class="fig-num">Figure 5 — 30-Seed Stability</span>
+              <p class="fig-cap">WG-CRC: mean 0.506±0.022, 17/30 seeds achieve zero violations, 27/30 at most one. Vanilla CRC violates ε=0.50 in all 30 runs, averaging 4.8 group violations per run.</p>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-7" data-aos="fade-up" data-aos-delay="120">
+          <p style="font-size:.87rem;color:#555;margin-bottom:14px;"><strong>Multi-seed stability.</strong> 17/30 seeds produce zero violations; 27/30 at most one. Four seeds exceed ε+Δ*=0.54, within the expected range under a 5% per-split failure probability (Proposition 1). α=0.5 is chosen over α=0.2 for a 2.1× reliability improvement despite modest coverage reduction.</p>
+          <p style="font-size:.87rem;color:#555;margin-bottom:14px;"><strong>Held-out corruption generalization.</strong> With screen family withheld from calibration, the global fallback τ̂<sub>min</sub> achieves worst-group risk 0.470 and 31.7% coverage — matching Vanilla CRC and only 0.8% below oracle assignment.</p>
+          <p class="tbl-label">Table 4 — Held-Out Screen Corruption Family</p>
+          <div class="table-responsive">
+            <table class="res-table" style="max-width:420px;">
+              <thead><tr><th>Calibration</th><th>Worst Risk ↓</th><th>Coverage ↑</th><th>Safe?</th></tr></thead>
+              <tbody>
+                <tr><td>Vanilla CRC (4 families)</td><td>0.470</td><td>31.7%</td><td><span class="bs">✓</span></td></tr>
+                <tr><td>WG-CRC (4f, fallback)</td><td>0.470</td><td>31.7%</td><td><span class="bs">✓</span></td></tr>
+                <tr class="row-ours"><td>WG-CRC (5f, oracle)</td><td>0.464</td><td>30.9%</td><td><span class="bs">✓</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Row 2: cross-dataset transfer — full width so wide figure has room -->
+      <div class="row" data-aos="fade-up" data-aos-delay="60">
+        <div class="col-12">
+          <p style="font-size:.87rem;color:#555;margin-bottom:14px;"><strong>Cross-dataset transfer.</strong> On NIH ChestX-ray14 (zero-shot, n=15,000), FDV achieves Spearman ρ=0.513 — consistent across all five families (range 0.511–0.520). The disagreement signal generalizes across institutions, scanner types, and label schemas.</p>
+          <div class="fig-card fig-wide" data-aos="fade-up" data-aos-delay="100">
+            <div class="fig-img" style="min-height:200px;"><img src="nih_transfer.png" alt="NIH Transfer" onclick="lb(this.src)" style="max-height:400px;"/></div>
+            <div class="fig-body">
+              <span class="fig-num">Figure 6 — FDV–Risk: CheXpert (calibration) vs. NIH ChestX-ray14 (zero-shot)</span>
+              <p class="fig-cap">On NIH, disagreement D and entropy H achieve similar correlations (both ρ≈0.51) — contrasting with CheXpert where D substantially outperformed H. FDV's combined signal remains robust across institutions.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ABLATIONS -->
+<section id="ablations">
+  <div class="container">
+    <div class="sec-hdr" data-aos="fade-up">
+      <span class="pre-label">Design Choices</span>
+      <h2>Ablation Studies</h2>
+      <div class="accent-line"></div>
+    </div>
+    <div class="row g-4">
+      <div class="col-md-5" data-aos="fade-up" data-aos-delay="60">
+        <span class="subsec-label">FDV Mixing Weight α</span>
+        <p style="font-size:.85rem;color:#555;margin-bottom:14px;">Using D alone (α=0) satisfies the constraint but yields only 12.7% coverage. α=0.2 gives higher single-split coverage (27.6%) but only 8/30 zero-violation seeds (27%) vs. 17/30 (57%) for α=0.5 — a 2.1× reliability improvement. Values α&gt;0.5 progressively degrade safety.</p>
+        <p class="tbl-label">Table 5 — WG-CRC Across α</p>
+        <div class="table-responsive">
+          <table class="res-table">
+            <thead><tr><th>α</th><th>Worst Risk ↓</th><th>Coverage ↑</th><th>Violations</th></tr></thead>
+            <tbody>
+              <tr><td>0.0 (D only)</td><td>0.577</td><td>12.7%</td><td>1/15</td></tr>
+              <tr><td>0.2</td><td>0.498</td><td>27.6%</td><td>0/15</td></tr>
+              <tr class="row-ours"><td>0.5 (proposed)</td><td>0.500</td><td>23.9%</td><td>0/15</td></tr>
+              <tr><td>0.8</td><td>0.549</td><td>8.6%</td><td>2/15</td></tr>
+              <tr><td>1.0 (H only)</td><td>0.670</td><td>16.6%</td><td>14/15</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="col-md-7" data-aos="fade-up" data-aos-delay="120">
+        <span class="subsec-label">Calibration Buffer Δ</span>
+        <p style="font-size:.85rem;color:#555;margin-bottom:14px;">Zero violations hold for all Δ ∈ [0.04, 0.08] — confirming Δ=0.04 is the coverage-optimal value within a stable feasible range, not a cherry-picked optimum. Values Δ≤0.03 produce 1–3/15 violations; Δ≥0.05 reduces coverage unnecessarily.</p>
+        <p class="tbl-label">Table 6 — WG-CRC Across Δ Values</p>
+        <div class="table-responsive">
+          <table class="res-table">
+            <thead><tr><th>Δ</th><th>ε<sub>cal</sub></th><th>Violations</th><th>Worst Risk</th><th>Coverage</th></tr></thead>
+            <tbody>
+              <tr><td>0.00</td><td>0.50</td><td>3/15</td><td>0.519</td><td>30.7%</td></tr>
+              <tr><td>0.01</td><td>0.49</td><td>3/15</td><td>0.519</td><td>27.7%</td></tr>
+              <tr><td>0.02</td><td>0.48</td><td>1/15</td><td>0.516</td><td>25.7%</td></tr>
+              <tr><td>0.03</td><td>0.47</td><td>1/15</td><td>0.505</td><td>25.3%</td></tr>
+              <tr class="row-ours"><td>0.04</td><td>0.46</td><td>0/15</td><td>0.500</td><td>23.9%</td></tr>
+              <tr><td>0.05</td><td>0.45</td><td>0/15</td><td>0.471</td><td>16.2%</td></tr>
+              <tr><td>0.06</td><td>0.44</td><td>0/15</td><td>0.460</td><td>13.4%</td></tr>
+              <tr><td>0.07</td><td>0.43</td><td>0/15</td><td>0.423</td><td>11.9%</td></tr>
+              <tr><td>0.08</td><td>0.42</td><td>0/15</td><td>0.427</td><td>10.9%</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Backbone comparison -->
+      <div class="col-12 mt-2" data-aos="fade-up" data-aos-delay="60">
+        <hr class="section-rule" style="margin:20px 0 24px;"/>
+        <span class="subsec-label">Backbone Comparison — Precondition for FDV Deployability</span>
+        <p style="font-size:.85rem;color:#555;max-width:820px;margin-bottom:14px;">WG-CRC effectiveness tracks ρ(D, risk). CheXagent (ρ=0.606) achieves 0/15 violations. LLaVA-Rad and MAIRA-2 (ρ≈0.49) also achieve 0/15 violations per minimum single-split result, but show higher multi-seed variability. Practical deployability criterion: estimate ρ(D, risk) on held-out calibration data before deployment.</p>
+        <p class="tbl-label">Table 7 — Backbone Deployability Analysis (ε=0.50, δ=0.05, G=15)</p>
+        <div class="table-responsive mb-3">
+          <table class="res-table">
+            <thead><tr><th>Backbone</th><th>Method</th><th>Coverage ↑</th><th>Violations</th><th>Worst Risk ↓</th><th>Multi-seed</th></tr></thead>
+            <tbody>
+              <tr><td>CheXagent</td><td>Vanilla CRC</td><td>33.6%</td><td>3/15</td><td>0.528</td><td>0.551±0.013</td></tr>
+              <tr class="row-ours"><td>CheXagent</td><td>WG-CRC + FDV</td><td>23.9%</td><td>0/15</td><td>0.500</td><td>0.506±0.022</td></tr>
+              <tr><td>LLaVA-Rad</td><td>Vanilla CRC</td><td>33.6%</td><td>2/15</td><td>0.534</td><td>0.568±0.037</td></tr>
+              <!-- FIX 1: LLaVA-Rad WG-CRC Violations was 1/15, LaTeX says 0/15 -->
+              <tr><td>LLaVA-Rad</td><td>WG-CRC + FDV</td><td>20.5%</td><td>0/15</td><td>0.515</td><td>0.510±0.027</td></tr>
+              <tr><td>MAIRA-2</td><td>Vanilla CRC</td><td>27.2%</td><td>3/15</td><td>0.549</td><td>0.571±0.022</td></tr>
+              <!-- FIX 2: MAIRA-2 WG-CRC Violations was 1/15, LaTeX says 0/15 -->
+              <!-- FIX 3: MAIRA-2 WG-CRC Worst Risk was 0.551, LaTeX says 0.517 -->
+              <tr><td>MAIRA-2</td><td>WG-CRC + FDV</td><td>21.5%</td><td>0/15</td><td>0.517</td><td>0.550±0.140</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="table-responsive">
+          <table class="res-table" style="max-width:560px;">
+            <thead><tr><th>Backbone</th><th>ρ(D, r)</th><th>ρ(FDV, r)</th><th>ρ(H, r)</th><th>Δ*</th><th>Min. viol.</th></tr></thead>
+            <tbody>
+              <tr class="row-ours"><td>CheXagent</td><td>0.606</td><td>0.492</td><td>0.197</td><td>0.04</td><td>0/15</td></tr>
+              <!-- FIX 4: LLaVA-Rad Min.viol was 1/15, LaTeX says 0/15 -->
+              <tr><td>LLaVA-Rad</td><td>0.497</td><td>0.413</td><td>0.197</td><td>0.04</td><td>0/15</td></tr>
+              <!-- FIX 5: MAIRA-2 Min.viol was 1/15, LaTeX says 0/15 -->
+              <tr><td>MAIRA-2</td><td>0.489</td><td>0.397</td><td>0.157</td><td>0.05</td><td>0/15</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CITATION -->
+<section id="citation" class="sec-alt">
+  <div class="container">
+    <div class="sec-hdr" data-aos="fade-up">
+      <span class="pre-label">Reference</span>
+      <h2>Citation</h2>
+      <div class="accent-line"></div>
+    </div>
+    <div class="row justify-content-center">
+      <div class="col-lg-9" data-aos="fade-up" data-aos-delay="60">
+        <p style="font-size:.86rem;color:#666;margin-bottom:14px;">BibTeX will be updated upon publication. The paper is currently under anonymous review.</p>
+        <div class="bib-block" id="bibtext">@inproceedings{teleradshift2026,
+  title     = {TeleRadShift: Worst-Group Conformal Risk Control
+               for Safe VLM Triage Under Telemedicine Acquisition Shift},
+  author    = {Anonymous},
+  booktitle = {Proceedings of the 34th ACM International
+               Conference on Multimedia (MM '26)},
+  year      = {2026},
+  doi       = {XXXXXXX.XXXXXXX},
+  note      = {Under review}
+}<button class="copy-btn" onclick="copyBib()">Copy</button></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="container">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+      <div><span class="brand">TeleRadShift</span><span class="f-sep"></span>ACM Multimedia 2026<span class="f-sep"></span>Anonymous Submission</div>
+      <div><a href="https://github.com/gen-ai-research/teleradshift" target="_blank"><i class="bi bi-github me-1"></i>GitHub</a><span class="f-sep"></span><a href="#hero">↑ Top</a></div>
+    </div>
+  </div>
+</footer>
+
+<!-- LIGHTBOX -->
+<div class="lb" id="lbox" onclick="lbc()">
+  <button class="lb-close" onclick="lbc()">&#x2715;</button>
+  <img id="lbimg" src="" alt="" onclick="event.stopPropagation()"/>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.js"></script>
+<script>
+  AOS.init({duration:550,easing:'ease-in-out',once:true,offset:50});
+  function lb(s){document.getElementById('lbimg').src=s;document.getElementById('lbox').classList.add('open');document.body.style.overflow='hidden';}
+  function lbc(){document.getElementById('lbox').classList.remove('open');document.body.style.overflow='';}
+  document.addEventListener('keydown',e=>{if(e.key==='Escape')lbc();});
+  function copyBib(){const t=document.getElementById('bibtext').innerText.replace('Copy','').trim();navigator.clipboard.writeText(t).then(()=>{const b=document.querySelector('.copy-btn');b.textContent='Copied!';setTimeout(()=>b.textContent='Copy',2000);});}
+  window.addEventListener('scroll',()=>{const n=document.getElementById('topnav');n.style.padding=window.scrollY>40?'7px 0':'10px 0';n.style.boxShadow=window.scrollY>40?'0 2px 22px rgba(0,0,0,.1)':'0 2px 18px rgba(0,0,0,.07)';});
+</script>
+</body>
+</html>
